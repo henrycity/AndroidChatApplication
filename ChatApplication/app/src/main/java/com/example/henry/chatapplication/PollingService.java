@@ -17,7 +17,7 @@ import java.net.URL;
  */
 public class PollingService extends IntentService {
 
-    private static String NAME = "PollingService";
+    public static final String NAME = "PollingService";
     private String sessionId;
 
     public PollingService(String sessionId) {

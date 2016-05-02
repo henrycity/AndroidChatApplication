@@ -7,6 +7,7 @@ public class Response {
 
     private String result;
     private String username;
+    private String sessionId;
 
     public String getResult() {
         return result;
@@ -22,5 +23,13 @@ public class Response {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

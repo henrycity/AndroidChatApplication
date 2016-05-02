@@ -1,5 +1,6 @@
 package com.example.henry.chatapplication;
 
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -39,6 +40,8 @@ public class ResponseParser {
                 response.setResult(readResult(parser));
             } else if (name.equals("username")) {
                 response.setUsername(readUsername(parser));
+            } else if (name.equals("sessionId")) {
+                response.setSessionId(readSessionId(parser));
             } else {
                 skip(parser);
             }
@@ -56,8 +59,15 @@ public class ResponseParser {
     private String readUsername(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "username");
         String username = readText(parser);
-        parser.require(XmlPullParser.START_TAG, ns, "username");
+        parser.require(XmlPullParser.END_TAG, ns, "username");
         return username;
+    }
+
+    private String readSessionId(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "sessionId");
+        String sessionId = readText(parser);
+        parser.require(XmlPullParser.END_TAG, ns, "sessionId");
+        return sessionId;
     }
 
     private String readText(XmlPullParser parser) throws XmlPullParserException, IOException {
