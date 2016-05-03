@@ -23,7 +23,8 @@
         android:id="@+id/txtPassword"
         android:layout_below="@+id/txtUsername"
         android:layout_centerHorizontal="true"
-        android:hint="password" />
+        android:hint="password"
+        android:inputType="textPassword"/>
 
     <Button
         android:layout_width="wrap_content"

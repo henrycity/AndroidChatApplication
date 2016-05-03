@@ -70,7 +70,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         } else {
             Log.d(NAME, "Cannot connect! in onCreate()");
         }
-
     }
 
     @Override
