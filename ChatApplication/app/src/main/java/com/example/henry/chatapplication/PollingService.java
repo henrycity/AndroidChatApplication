@@ -1,12 +1,15 @@
 package com.example.henry.chatapplication;
 
 import android.app.IntentService;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import android.widget.ListView;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -20,13 +23,16 @@ public class PollingService extends IntentService {
     public static final String NAME = "PollingService";
     private String sessionId;
 
-    public PollingService(String sessionId) {
+    public PollingService() {
         super(NAME);
-        this.sessionId = sessionId;
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        this.sessionId = intent.getStringExtra("sessionId");
+
+
+        Log.d(NAME, "SessionID: " + sessionId);
         ConnectivityManager connMgr = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -34,7 +40,6 @@ public class PollingService extends IntentService {
         if (networkInfo != null && networkInfo.isConnected()) {
             while (true) {
                 try {
-                    Thread.sleep(5000);
                     InputStream is = null;
 
                     URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId + "/update");
@@ -42,6 +47,8 @@ public class PollingService extends IntentService {
                     conn.setDoInput(true);
                     conn.connect();
                     is = conn.getInputStream();
+                    Response response = new ResponseParser().parse(is);
+                    processResponse(response);
                     /*
                     Players players = new PlayersParser().parse(is);
                     if (!players.toString().equals(getPlayersFromDatabase().toString())) {
@@ -53,14 +60,61 @@ public class PollingService extends IntentService {
                         sendBroadcast(broadcastIntent);
                     }
                     */
+                    Thread.sleep(500);
                 } catch (Exception e) {
                     e.printStackTrace();
                     break;
                 }
             }
         } else {
-            //textView.setText("Cannot connect!");
             Log.d(NAME, "Cannot connect! in onCreate()");
         }
     }
+
+    private void processResponse(Response response) {
+        try {
+            if (response.getResult() == "failure") {
+                return;
+            }
+            if (response.getCurrent() < response.getNewest()) {
+                for (int i = response.getCurrent() + 1; i <= response.getNewest(); i ++) {
+                    EventEntry entry = fetchEntry(i);
+                    if (entry.getType().equals("chat")) {
+                        Log.d(NAME, "inside processResponse");
+                        Log.d(NAME, "message: " + entry.getMessage());
+                        ContentValues values = new ContentValues();
+                        values.put("type", entry.getType());
+                        values.put("timeStamp", entry.getTimeStamp());
+                        values.put("time", entry.getTime());
+                        values.put("date", entry.getDate());
+                        values.put("message", entry.getMessage());
+                        values.put("roomId", entry.getRoomId());
+                        values.put("username", entry.getUsername());
+                        getContentResolver().insert(EntriesProvider.CONTENT_URI, values);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private EventEntry fetchEntry(int index) {
+        try {
+            Log.d(NAME, "inside fetchEntry");
+            InputStream is = null;
+
+            URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId + "/" + index);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoInput(true);
+            conn.connect();
+            is = conn.getInputStream();
+            EventEntry entry = new EventEntryParser().parse(is);
+            return entry;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

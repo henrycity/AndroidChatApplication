@@ -1,9 +1,15 @@
 package com.example.henry.chatapplication;
 
 import android.app.Activity;
+import android.app.IntentService;
+import android.app.LoaderManager;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -11,14 +17,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private SharedPreferences sharedPreference;
     private final String SESSION = "SESSION";
@@ -26,6 +39,13 @@ public class ChatActivity extends AppCompatActivity {
     private User user;
     //Views
     EditText chatBox;
+    ListView chatView;
+
+    EntriesOpenHelper dbHelper = null;
+    SQLiteDatabase db = null;
+    SimpleCursorAdapter adapter;
+    static final String[] PROJECTION = new String[]{"_id", "username", "message"};
+    static final String SELECTION = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +93,13 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Intent intent = new Intent(ChatActivity.this, PollingService.class);
+        stopService(intent);
+    }
+
     private void renderLogin() {
         Intent intent = new Intent(ChatActivity.this, LoginActivity.class);
         startActivityForResult(intent, 1);
@@ -80,17 +107,69 @@ public class ChatActivity extends AppCompatActivity {
 
     private void init() {
         Log.d(NAME, "Inside init()");
+
+        dbHelper = new EntriesOpenHelper(this);
+        db = dbHelper.getWritableDatabase();
+
+        String[] fromColumns = {"username", "message"};
+        int[] toViews = {android.R.id.text1, android.R.id.text2};
+        adapter = new SimpleCursorAdapter(this, android.R.layout.simple_list_item_2,
+                null, fromColumns, toViews, 0);
+
         chatBox = (EditText)findViewById(R.id.chat_box);
+        chatView = (ListView)findViewById(R.id.chat_view);
+
+        chatView.setAdapter(adapter);
+        getLoaderManager().initLoader(0, null, this);
+
+        Intent intent = new Intent(ChatActivity.this, PollingService.class);
+        intent.putExtra("sessionId", user.getSessionId());
+        startService(intent);
+
+
         Button sendButton = (Button)findViewById(R.id.send_button);
+        Button logoutButton = (Button)findViewById(R.id.logout_button);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String message = chatBox.getText().toString();
                 chatBox.setText("");
+                new SendMessageTask().execute(message);
             }
         });
+        logoutButton.setOnClickListener(new View.OnClickListener(){
 
+            @Override
+            public void onClick(View v) {
+                reset();
+                renderLogin();
+            }
+        });
         user.joinRoom(0);
+    }
+
+    private void reset() {
+        SharedPreferences sp = getSharedPreferences(SESSION, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("sessionId");
+        editor.commit();
+        user.setSessionId(null);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(this, EntriesProvider.CONTENT_URI,
+                PROJECTION, SELECTION, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
     }
 
     class SessionValidator extends AsyncTask<String, Void, Response> {
@@ -134,6 +213,43 @@ public class ChatActivity extends AppCompatActivity {
                 Log.d(NAME, "Error parsing the response");
                 exception.printStackTrace();
             }
+        }
+    }
+
+    class SendMessageTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... params) {
+            String message = params[0];
+            try {
+                URL url = new URL("http://10.0.2.2:8080/WebChat/api/events/chat");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/xml");
+                conn.setRequestProperty("sessionId", user.getSessionId());
+                StringBuilder request = new StringBuilder();
+                request.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                request.append("<chatEntry>");
+                    request.append("<roomId>").append(0).append("</roomId>");
+                    request.append("<message>").append(message).append("</message>");
+                request.append("</chatEntry>");
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.writeBytes(request.toString());
+                os.flush();
+                os.close();
+                Log.d(NAME, "" + conn.getResponseCode());
+                Log.d(NAME, conn.getResponseMessage());
+                InputStream is = conn.getInputStream();
+                Scanner scanner = new Scanner(is);
+                while (scanner.hasNextLine()) {
+                    Log.d(NAME, scanner.nextLine());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }

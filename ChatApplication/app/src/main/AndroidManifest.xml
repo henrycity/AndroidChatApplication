@@ -20,6 +20,10 @@
         </activity>
         <activity android:name=".LoginActivity" />
         <activity android:name=".RegisterActivity"></activity>
+        <service android:name=".PollingService"/>
+        <provider
+            android:authorities="com.example.henry.chatapplication"
+            android:name=".EntriesProvider"/>
     </application>
 
 </manifest>

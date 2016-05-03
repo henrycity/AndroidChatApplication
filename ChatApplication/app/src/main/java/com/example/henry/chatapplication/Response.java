@@ -8,6 +8,8 @@ public class Response {
     private String result;
     private String username;
     private String sessionId;
+    private int current;
+    private int newest;
 
     public String getResult() {
         return result;
@@ -31,5 +33,21 @@ public class Response {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public int getCurrent() {
+        return current;
+    }
+
+    public void setCurrent(int current) {
+        this.current = current;
+    }
+
+    public int getNewest() {
+        return newest;
+    }
+
+    public void setNewest(int newest) {
+        this.newest = newest;
     }
 }

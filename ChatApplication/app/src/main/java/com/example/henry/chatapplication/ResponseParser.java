@@ -42,6 +42,10 @@ public class ResponseParser {
                 response.setUsername(readUsername(parser));
             } else if (name.equals("sessionId")) {
                 response.setSessionId(readSessionId(parser));
+            } else if (name.equals("current")) {
+                response.setCurrent(readCurrent(parser));
+            } else if (name.equals("newest")){
+                response.setNewest(readNewest(parser));
             } else {
                 skip(parser);
             }
@@ -68,6 +72,20 @@ public class ResponseParser {
         String sessionId = readText(parser);
         parser.require(XmlPullParser.END_TAG, ns, "sessionId");
         return sessionId;
+    }
+
+    private int readCurrent(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "current");
+        String current = readText(parser);
+        parser.require(XmlPullParser.END_TAG, ns, "current");
+        return Integer.parseInt(current);
+    }
+
+    private int readNewest(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "newest");
+        String newest = readText(parser);
+        parser.require(XmlPullParser.END_TAG, ns, "newest");
+        return Integer.parseInt(newest);
     }
 
     private String readText(XmlPullParser parser) throws XmlPullParserException, IOException {

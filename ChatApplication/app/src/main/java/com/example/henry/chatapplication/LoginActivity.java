@@ -67,9 +67,24 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), RegisterActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, 1);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                String username = data.getStringExtra("username");
+                String sessionId = data.getStringExtra("sessionId");
+                Intent intent = new Intent();
+                intent.putExtra("username", username);
+                intent.putExtra("sessionId", sessionId);
+                setResult(Activity.RESULT_OK, intent);
+                finish();
+            }
+        }
     }
 
     class AccountValidator extends AsyncTask<String, Void, Response> {
@@ -122,4 +137,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
     }
+
+
 }
