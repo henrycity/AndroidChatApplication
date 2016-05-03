@@ -36,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        Log.d("onCreate","run");
         txtUsername = (EditText) findViewById(R.id.txtUsername);
         txtPassword = (EditText) findViewById(R.id.txtPassword);
         Button btnLogin = (Button) findViewById(R.id.btnLogin);
@@ -45,6 +46,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
+                    Log.d("onClick","run");
                     String username = txtUsername.getText().toString();
                     String password = txtPassword.getText().toString();
 
@@ -81,8 +83,9 @@ public class LoginActivity extends AppCompatActivity {
             String username = params[0];
             String password = params[1];
             try {
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/");
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
                 conn.setRequestMethod("POST");

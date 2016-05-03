@@ -26,6 +26,7 @@ public class ChatActivity extends AppCompatActivity {
     private User user;
     //Views
     EditText chatBox;
+    Button logoutButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,21 @@ public class ChatActivity extends AppCompatActivity {
         } else {
             Log.d(NAME, "Cannot connect! in onCreate()");
         }
+
+        logoutButton = (Button) findViewById(R.id.logout_button);
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences.Editor editor = sharedPreference.edit();
+                editor.putString("sessionId", null);
+                editor.commit();
+                renderLogin();
+            }
+        });
+
+
+
+
 
     }
 
@@ -103,7 +119,7 @@ public class ChatActivity extends AppCompatActivity {
             String sessionId = params[0];
             try {
                 Log.d(NAME, "SessionID: " + sessionId);
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId);
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/" + sessionId);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setDoInput(true);
                 conn.connect();

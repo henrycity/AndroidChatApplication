@@ -49,7 +49,7 @@ public class RegisterActivity extends AppCompatActivity {
                 username = txtUsername.getText().toString();
                 password = txtPassword.getText().toString();
                 if (username != null && password != null) {
-                        new RegisterUser(username, password).execute();
+                        new RegisterUser().execute(username, password);
                 }
 
             }
@@ -61,37 +61,17 @@ public class RegisterActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private InputStream downloadUrl(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        // Starts the query
-        conn.connect();
-        return conn.getInputStream();
-    }
-
-    class RegisterUser extends AsyncTask<Void, Void, Void> {
-
-        private String username;
-        private String password;
-        HttpURLConnection conn;
-        HttpURLConnection connection;
-
-        public RegisterUser(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
+    class RegisterUser extends AsyncTask<String, Void, Response> {
 
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Response doInBackground(String... params) {
 
             try {
+                String username = params[0];
+                String password = params[1];
                 URL url = new URL("http://10.0.3.2:8080/WebChat/api/users/");
-                conn = (HttpURLConnection) url.openConnection();
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000);
                 conn.setConnectTimeout(15000);
                 conn.setRequestMethod("POST");
@@ -112,6 +92,7 @@ public class RegisterActivity extends AppCompatActivity {
                 InputStream is = conn.getInputStream();
                 Response response = new ResponseParser().parse(is);
                 Log.d("background", "can you get here");
+                return response;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -119,29 +100,18 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            InputStream stream = null;
+        protected void onPostExecute(Response response) {
+
             try {
-//                URL url = new URL("http://10.0.3.2:8080/WebChat/api/users/");
-//                connection = (HttpURLConnection) url.openConnection();
-//                connection.setReadTimeout(10000);
-//                connection.setConnectTimeout(15000);
-//                connection.setRequestMethod("GET");
-//                connection.setDoInput(true);
-                Log.d("onPostExecute", "can you get here");
-
-                Log.d("onPostExecute", "no can you get here");
-
-//                Response response = new ResponseParser().parse(connection.getInputStream());
-//                Log.d("onPostExecute", "no can you get here");
-//                Log.d("result", response.getResult());
-//                if (response.getResult().equals("success")) {
-//                    renderChat();
-//                }
+                if (response.getResult().equals("success")) {
+                    Intent intent = new Intent(RegisterActivity.this, ChatActivity.class);
+                    intent.putExtra("username", response.getUsername());
+                    intent.putExtra("sessionId", response.getSessionId());
+                    startActivity(intent);
+                }
             } catch(Exception e) {
 
             }
-
         }
     }
 }
