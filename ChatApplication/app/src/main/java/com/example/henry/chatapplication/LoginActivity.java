@@ -67,7 +67,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-        // **** **** //
+        // **** //
 
         // **** Register Button redirects to RegisterActivity and LoginActivity waits for its data **** //
         btnRegister.setOnClickListener(new View.OnClickListener() {
@@ -77,7 +77,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
-        // **** **** //
+        // **** //
     }
 
     // When registering is successful, redirect to ChatActivity with username and sessionId

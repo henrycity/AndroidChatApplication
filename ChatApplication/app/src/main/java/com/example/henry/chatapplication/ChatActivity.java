@@ -110,17 +110,13 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
     private void init() {
         Log.d(NAME, "Inside init()");
 
-        dbHelper = new EntriesOpenHelper(this);
-        db = dbHelper.getWritableDatabase();
-
-        String[] fromColumns = {"username", "message"};
-        int[] toViews = {android.R.id.text1, android.R.id.text2};
-        adapter = new SimpleCursorAdapter(this, android.R.layout.simple_list_item_2,
-                null, fromColumns, toViews, 0);
-
         chatBox = (EditText)findViewById(R.id.chat_box);
         chatView = (ListView)findViewById(R.id.chat_view);
 
+//        dbHelper = new EntriesOpenHelper(this);
+//        db = dbHelper.getWritableDatabase();
+
+        setUpAdapter();
         chatView.setAdapter(adapter);
         getLoaderManager().initLoader(0, null, this);
 
@@ -158,6 +154,13 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
         // Auto join broadcast chatroom
         user.joinRoom(0);
+    }
+
+    private void setUpAdapter() {
+        String[] fromColumns = {"username", "message"};
+        int[] toViews = {android.R.id.text1, android.R.id.text2};
+        adapter = new SimpleCursorAdapter(this, android.R.layout.simple_list_item_2,
+                null, fromColumns, toViews, 0);
     }
 
     // Remove sessionId
