@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -42,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         Button btnLogin = (Button) findViewById(R.id.btnLogin);
         Button btnRegister = (Button) findViewById(R.id.btnRegister);
 
+        // **** Login Button checks username and password by executing AccountValidator **** //
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -55,6 +57,7 @@ public class LoginActivity extends AppCompatActivity {
                     NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
                     if (networkInfo != null && networkInfo.isConnected()) {
+                        if (!username.equals("") && !password.equals(""))
                         new AccountValidator().execute(username, password);
                     } else {
                         Log.d(NAME, "Cannot connect! in onCreate()");
@@ -64,7 +67,9 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
+        // **** **** //
 
+        // **** Register Button redirects to RegisterActivity and LoginActivity waits for its data **** //
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -72,8 +77,10 @@ public class LoginActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
+        // **** **** //
     }
 
+    // When registering is successful, redirect to ChatActivity with username and sessionId
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 1) {
@@ -89,6 +96,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    // Check if username and password are correct
     class AccountValidator extends AsyncTask<String, Void, Response> {
 
         public static final String NAME = "AccountValidator";
@@ -98,9 +106,8 @@ public class LoginActivity extends AppCompatActivity {
             String username = params[0];
             String password = params[1];
             try {
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/");
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
                 conn.setRequestMethod("POST");
@@ -118,23 +125,28 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(NAME, "" + conn.getResponseCode());
                 Log.d(NAME, conn.getResponseMessage());
                 InputStream is = conn.getInputStream();
+                // receive a Response object from the server and parse it
                 Response response = new ResponseParser().parse(is);
                 return response;
-                //print result
             } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;
         }
 
+        // If the result of response is success, redirect to ChatActivity
         @Override
         protected void onPostExecute(Response response) {
             try {
-                Intent intent = new Intent();
-                intent.putExtra("username", response.getUsername());
-                intent.putExtra("sessionId", response.getSessionId());
-                setResult(Activity.RESULT_OK, intent);
-                finish();
+                if (response.getResult().equals("success")) {
+                    Intent intent = new Intent();
+                    intent.putExtra("username", response.getUsername());
+                    intent.putExtra("sessionId", response.getSessionId());
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Wrong username and password", Toast.LENGTH_LONG).show();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

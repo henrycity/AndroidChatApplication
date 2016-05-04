@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         btnLogin = (Button) findViewById(R.id.btnLogin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
 
+        // Redirect to LoginActivity
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -44,12 +46,13 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
+        // Register for new User
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 username = txtUsername.getText().toString();
                 password = txtPassword.getText().toString();
-                if (username != null && password != null) {
+                if (!username.equals("") && !password.equals("")) {
                         new RegisterUser().execute(username, password);
                 }
 
@@ -57,13 +60,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void renderChat() {
-        Intent intent = new Intent(RegisterActivity.this, RegisterActivity.class);
-        startActivity(intent);
-    }
-
     class RegisterUser extends AsyncTask<String, Void, Response> {
-
 
         @Override
         protected Response doInBackground(String... params) {
@@ -71,7 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
             try {
                 String username = params[0];
                 String password = params[1];
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/users/");
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/users/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000);
                 conn.setConnectTimeout(15000);
@@ -79,7 +76,6 @@ public class RegisterActivity extends AppCompatActivity {
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
                 conn.setRequestProperty("Content-Type", "application/xml; charset=utf-8");
-
                 String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
                         "<user>" +
                         "<username>" + username + "</username>" +
@@ -89,10 +85,9 @@ public class RegisterActivity extends AppCompatActivity {
                 output.write(body.getBytes());
                 output.flush();
                 output.close();
-                Log.d("background bef", "can you get here");
                 InputStream is = conn.getInputStream();
+                // receive a Response object from the server and parse it
                 Response response = new ResponseParser().parse(is);
-                Log.d("background", "can you get here");
                 return response;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -100,6 +95,7 @@ public class RegisterActivity extends AppCompatActivity {
             return null;
         }
 
+        // If the response is success, redirect to ChatActivity
         @Override
         protected void onPostExecute(Response response) {
 
@@ -110,9 +106,11 @@ public class RegisterActivity extends AppCompatActivity {
                     intent.putExtra("sessionId", response.getSessionId());
                     setResult(Activity.RESULT_OK, intent);
                     finish();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Username already exists", Toast.LENGTH_LONG).show();
                 }
             } catch(Exception e) {
-
+                e.printStackTrace();
             }
         }
     }

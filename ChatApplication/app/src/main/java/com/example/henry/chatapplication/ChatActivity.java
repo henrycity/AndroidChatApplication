@@ -72,6 +72,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
+    // Store sessionId in SharedPreferences and create new User when LoginActivity finishes
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 1) {
@@ -87,6 +88,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 user.setSessionId(sessionId);
                 Log.d(NAME, "sessionId inside onActivityResult: " + sharedPreference.getString("sessionId", null));
 
+                // Setup the database, listview and call Service
                 init();
             }
         }
@@ -104,6 +106,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         startActivityForResult(intent, 1);
     }
 
+    // Create the Database, ListView and start polling
     private void init() {
         Log.d(NAME, "Inside init()");
 
@@ -121,32 +124,43 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         chatView.setAdapter(adapter);
         getLoaderManager().initLoader(0, null, this);
 
+        // **** Start polling service **** //
         Intent intent = new Intent(ChatActivity.this, PollingService.class);
         intent.putExtra("sessionId", user.getSessionId());
         startService(intent);
-
+        // **** //
 
         Button sendButton = (Button)findViewById(R.id.send_button);
         Button logoutButton = (Button)findViewById(R.id.logout_button);
+
+        //**** Send message by executing SendMessageTask ****//
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String message = chatBox.getText().toString();
-                chatBox.setText("");
-                new SendMessageTask().execute(message);
+                if (!message.equals("")) {
+                    chatBox.setText("");
+                    new SendMessageTask().execute(message);
+                }
             }
         });
-        logoutButton.setOnClickListener(new View.OnClickListener(){
+        // **** //
 
+        //**** Logout Button will remove sessionId and redirect to LoginActivity ****//
+        logoutButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 reset();
                 renderLogin();
             }
         });
+        // **** //
+
+        // Auto join broadcast chatroom
         user.joinRoom(0);
     }
 
+    // Remove sessionId
     private void reset() {
         SharedPreferences sp = getSharedPreferences(SESSION, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
@@ -171,6 +185,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         adapter.swapCursor(null);
     }
 
+    // Validate if the server has the sessionId
     class SessionValidator extends AsyncTask<String, Void, Response> {
 
         public static final String NAME = "SessionValidator";
@@ -181,7 +196,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             String sessionId = params[0];
             try {
                 Log.d(NAME, "SessionID: " + sessionId);
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId);
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/" + sessionId);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setDoInput(true);
                 conn.connect();
@@ -195,6 +210,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             return null;
         }
 
+        // If the server still has sessionId, it will create a User. If not, redirect to LoginActivity
         @Override
         protected void onPostExecute(Response response) {
             try {
@@ -207,6 +223,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 user.setUsername(response.getUsername());
                 user.setSessionId(response.getSessionId());
 
+                // Calling polling service
                 init();
             } catch (NullPointerException exception) {
                 Log.d(NAME, "Error parsing the response");
@@ -215,13 +232,14 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
+    // Send the message to the server by POST request
     class SendMessageTask extends AsyncTask<String, Void, Void> {
 
         @Override
         protected Void doInBackground(String... params) {
             String message = params[0];
             try {
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/events/chat");
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/events/chat");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setDoOutput(true);
                 conn.setDoInput(true);

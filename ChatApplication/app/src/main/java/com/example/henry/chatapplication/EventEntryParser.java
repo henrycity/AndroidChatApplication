@@ -35,19 +35,19 @@ public class EventEntryParser {
             }
             String name = parser.getName();
             if (name.equals("type")) {
-                entry.setType(readType(parser));
+                entry.setType(readString(parser, "type"));
             } else if (name.equals("timeStamp")) {
                 entry.setTimeStamp(readTimeStamp(parser));
             } else if (name.equals("time")) {
-                entry.setTime(readTime(parser));
+                entry.setTime(readString(parser, "time"));
             } else if (name.equals("date")) {
-                entry.setDate(readDate(parser));
+                entry.setDate(readString(parser, "date"));
             } else if (name.equals("message")){
-                entry.setMessage(readMessage(parser));
+                entry.setMessage(readString(parser, "message"));
             } else if (name.equals("roomId")){
                 entry.setRoomId(readRoomId(parser));
             } else if (name.equals("username")){
-                entry.setUsername(readUsername(parser));
+                entry.setUsername(readString(parser, "username"));
             } else {
                 skip(parser);
             }
@@ -55,11 +55,11 @@ public class EventEntryParser {
         return entry;
     }
 
-    private String readType(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "type");
-        String type = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "type");
-        return type;
+    private String readString(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, tag);
+        String result = readText(parser);
+        parser.require(XmlPullParser.END_TAG, ns, tag);
+        return result;
     }
 
     private long readTimeStamp(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -69,39 +69,11 @@ public class EventEntryParser {
         return Long.parseLong(timeStamp);
     }
 
-    private String readTime(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "time");
-        String time = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "time");
-        return time;
-    }
-
-    private String readDate(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "date");
-        String date = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "date");
-        return date;
-    }
-
-    private String readMessage(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "message");
-        String message = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "message");
-        return message;
-    }
-
     private int readRoomId(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "roomId");
         String roomId = readText(parser);
         parser.require(XmlPullParser.END_TAG, ns, "roomId");
         return Integer.parseInt(roomId);
-    }
-
-    private String readUsername(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "username");
-        String username = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "username");
-        return username;
     }
 
     private String readText(XmlPullParser parser) throws XmlPullParserException, IOException {

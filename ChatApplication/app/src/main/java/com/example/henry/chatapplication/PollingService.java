@@ -27,39 +27,25 @@ public class PollingService extends IntentService {
         super(NAME);
     }
 
+    // Check for a Response every half second
     @Override
     protected void onHandleIntent(Intent intent) {
         this.sessionId = intent.getStringExtra("sessionId");
-
-
         Log.d(NAME, "SessionID: " + sessionId);
         ConnectivityManager connMgr = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-
         if (networkInfo != null && networkInfo.isConnected()) {
             while (true) {
                 try {
                     InputStream is = null;
-
-                    URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId + "/update");
+                    URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/" + sessionId + "/update");
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setDoInput(true);
                     conn.connect();
                     is = conn.getInputStream();
                     Response response = new ResponseParser().parse(is);
                     processResponse(response);
-                    /*
-                    Players players = new PlayersParser().parse(is);
-                    if (!players.toString().equals(getPlayersFromDatabase().toString())) {
-                        PlayersOpenHelper dbHelper = new PlayersOpenHelper(getApplicationContext());
-                        SQLiteDatabase db = dbHelper.getWritableDatabase();
-                        db.execSQL("delete from players");
-                        addPlayersToDatabase(players);
-                        Intent broadcastIntent = new Intent(getApplicationContext(), MyReceiver.class);
-                        sendBroadcast(broadcastIntent);
-                    }
-                    */
                     Thread.sleep(500);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -71,6 +57,7 @@ public class PollingService extends IntentService {
         }
     }
 
+    // If the EventEntry type is "chat" then we will put the data in the database
     private void processResponse(Response response) {
         try {
             if (response.getResult() == "failure") {
@@ -103,8 +90,7 @@ public class PollingService extends IntentService {
         try {
             Log.d(NAME, "inside fetchEntry");
             InputStream is = null;
-
-            URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId + "/" + index);
+            URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/" + sessionId + "/" + index);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoInput(true);
             conn.connect();
@@ -116,5 +102,4 @@ public class PollingService extends IntentService {
         }
         return null;
     }
-
 }

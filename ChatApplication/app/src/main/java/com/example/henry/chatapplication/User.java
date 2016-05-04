@@ -45,7 +45,7 @@ public class User {
             int roomId = params[0];
             try {
                 Log.d(NAME, "SessionID: " + sessionId);
-                URL url = new URL("http://10.0.2.2:8080/WebChat/api/sessions/" + sessionId + "/rooms");
+                URL url = new URL("http://10.0.3.2:8080/WebChat/api/sessions/" + sessionId + "/rooms");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setDoInput(true);
                 conn.setDoOutput(true);

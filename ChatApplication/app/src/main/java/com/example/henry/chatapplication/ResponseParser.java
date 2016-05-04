@@ -1,6 +1,5 @@
 package com.example.henry.chatapplication;
 
-import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -37,11 +36,11 @@ public class ResponseParser {
             }
             String name = parser.getName();
             if (name.equals("result")) {
-                response.setResult(readResult(parser));
+                response.setResult(readString(parser, "result"));
             } else if (name.equals("username")) {
-                response.setUsername(readUsername(parser));
+                response.setUsername(readString(parser, "username"));
             } else if (name.equals("sessionId")) {
-                response.setSessionId(readSessionId(parser));
+                response.setSessionId(readString(parser, "sessionId"));
             } else if (name.equals("current")) {
                 response.setCurrent(readCurrent(parser));
             } else if (name.equals("newest")){
@@ -53,25 +52,11 @@ public class ResponseParser {
         return response;
     }
 
-    private String readResult(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "result");
+    private String readString(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, tag);
         String result = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "result");
+        parser.require(XmlPullParser.END_TAG, ns, tag);
         return result;
-    }
-
-    private String readUsername(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "username");
-        String username = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "username");
-        return username;
-    }
-
-    private String readSessionId(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "sessionId");
-        String sessionId = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "sessionId");
-        return sessionId;
     }
 
     private int readCurrent(XmlPullParser parser) throws XmlPullParserException, IOException {
